@@ -20,6 +20,7 @@ var scene2 = new THREE.Scene();
 camera.position.x = 2.5;
 camera.position.y = 2.5;
 camera.position.z = 2.5;
+camera.up = new THREE.Vector3(0, 0, 1);
 camera.lookAt(new THREE.Vector3(0, 0, 0));
 scene.add(camera);
 
@@ -38,7 +39,7 @@ var sphere = new THREE.Mesh(spheregeometry, spherematerial);
 sphere.position.set(0, 0, 0);
 scene.add(sphere);
 
-var direction = new THREE.Vector3(1 / Math.sqrt(3), 1 / Math.sqrt(3), 1 / Math.sqrt(3));
+var direction = new THREE.Vector3(0, 0, -1);
 var r = new THREE.ArrowHelper(direction.normalize(), new THREE.Vector3(0, 0, 0), 1, 0xffffff);
 scene.add(r);
 
@@ -65,13 +66,13 @@ controls = new THREE.OrbitControls(camera, renderer.domElement);
 //controls.addEventListener('change', render);
 
 var $x = $('<div style="position: absolute; top: 10px; left: 10px; color: white;"></div>');
-$x.text("x");
+$x.text("u");
 $container.append($x);
 var $y = $('<div style="position: absolute; top: 10px; left: 10px; color: white;"></div>');
-$y.text("y");
+$y.text("v");
 $container.append($y);
 var $z = $('<div style="position: absolute; top: 10px; left: 10px; color: white;"></div>');
-$z.text("z");
+$z.text("w");
 $container.append($z);
 
 function positionText(pos3D, el) {
@@ -101,17 +102,32 @@ function createPoint(vec) {
 
 var idx = 0;
 var points = [];
+var detuning = 1;
+var rabiFrequency = 0;
+var vec = direction;
+var commands = [
+    [Math.PI / 3, 1, 0],
+    [Math.PI / 8, 0, -1],
+    [Math.PI / 4, 0, -7],
+    [Math.PI / 2, 1, 0],
+    [Math.PI / 2, 1, -1],
+    [Number.MAX_SAFE_INTEGER, 0, -1]
+];
+
+var a = 0;
+var alimit = 0;
+var completed = true;
 
 function render() {
     positionText(new THREE.Vector3(1.1, 0, 0), $x);
     positionText(new THREE.Vector3(0, 1.1, 0), $y);
     positionText(new THREE.Vector3(0, 0, 1.1), $z);
-    t += 0.01;
-    vec = direction.clone().applyMatrix3(transformation(rabiFrequency, detuning, t));
+    vec = direction.clone().applyMatrix3(transformation(rabiFrequency, detuning, a / gr(rabiFrequency, detuning))).normalize();
+    loop();
     r.setDirection(vec);
     if (points.length < 500) {
         for (var i = 0; i < idx; ++i) {
-            points[i].material.opacity *= 0.97;
+            points[i].material.opacity *= 0.98;
         }
         ++idx;
         points.push(createPoint(vec));
@@ -127,12 +143,37 @@ function render() {
     renderer.render(scene, camera);
     renderer.clearDepth();
     renderer.render(scene2, camera);
+
+    var rx = (Math.round(vec.x * 100) / 100).toFixed(2);
+    var ry = (Math.round(vec.y * 100) / 100).toFixed(2);
+    var rz = (Math.round(vec.z * 100) / 100).toFixed(2);
+    $("#descpanel").text("(u = " + rx + ", v = " + ry + ", w = " + rz + ")");
 }
 
-t = 0;
-detuning = 1;
-rabiFrequency = 0;
-vec = direction;
+function loop() {
+    if (a > alimit) {
+        vec = direction.clone().applyMatrix3(transformation(rabiFrequency, detuning, alimit / gr(rabiFrequency, detuning))).normalize();
+        direction = vec;
+        completed = true;
+    }
+    if (completed) {
+        if (commands.length > 0) {
+            var next = commands.shift();
+            alimit = next[0];
+            rabiFrequency = next[1];
+            detuning = next[2];
+            completed = false;
+        } else {
+            alimit = 0;
+            rabiFrequency = 0;
+            detuning = 1;
+        }
+        a = 0;
+    }
+    if (!completed) {
+        a += 0.01;
+    }
+}
 
 function renderLoop() {
     render();
