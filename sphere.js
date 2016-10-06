@@ -1,7 +1,7 @@
 var $document = $(document);
 var $container = $('#container');
 
-var WIDTH = $document.width();
+var WIDTH = $document.width() * 7.0 / 10;
 var HEIGHT = $document.height();
 
 var VIEW_ANGLE = 45,
@@ -105,24 +105,25 @@ var points = [];
 var detuning = 1;
 var rabiFrequency = 0;
 var vec = direction;
-var commands = [
-    [Math.PI / 3, 1, 0],
-    [Math.PI / 8, 0, -1],
-    [Math.PI / 4, 0, -7],
-    [Math.PI / 2, 1, 0],
-    [Math.PI / 2, 1, -1],
-    [Number.MAX_SAFE_INTEGER, 0, -1]
-];
-
+var commands = [];
 var a = 0;
-var alimit = 0;
+var alimit = -1;
 var completed = true;
+var paused = true;
+
+function updateQueue() {
+    $('#queuetable > tbody').html('');
+    if (alimit > 0)
+        $('#queuetable > tbody:last-child').append('<tr><td>' + alimit + '</td><td>' + rabiFrequency + '</td><td>' + detuning + '</td></tr>');
+    for (var i = 0; i < commands.length; ++i) {
+        $('#queuetable > tbody:last-child').append('<tr><td>' + commands[i][0] + '</td><td>' + commands[i][1] + '</td><td>' + commands[i][2] + '</td></tr>');
+    }
+}
 
 function render() {
     positionText(new THREE.Vector3(1.1, 0, 0), $x);
     positionText(new THREE.Vector3(0, 1.1, 0), $y);
     positionText(new THREE.Vector3(0, 0, 1.1), $z);
-    vec = direction.clone().applyMatrix3(transformation(rabiFrequency, detuning, a / gr(rabiFrequency, detuning))).normalize();
     loop();
     r.setDirection(vec);
     if (points.length < 500) {
@@ -151,13 +152,16 @@ function render() {
 }
 
 function loop() {
+    if (!paused) {
+        vec = direction.clone().applyMatrix3(transformation(rabiFrequency, detuning, a / gr(rabiFrequency, detuning))).normalize();
+    }
     if (a > alimit) {
-        vec = direction.clone().applyMatrix3(transformation(rabiFrequency, detuning, alimit / gr(rabiFrequency, detuning))).normalize();
         direction = vec;
         completed = true;
     }
     if (completed) {
         if (commands.length > 0) {
+            vec = direction.clone().applyMatrix3(transformation(rabiFrequency, detuning, alimit / gr(rabiFrequency, detuning))).normalize();
             var next = commands.shift();
             alimit = next[0];
             rabiFrequency = next[1];
@@ -169,6 +173,10 @@ function loop() {
             detuning = 1;
         }
         a = 0;
+        updateQueue();
+    }
+    if (paused) {
+        return;
     }
     if (!completed) {
         a += 0.01;
@@ -199,9 +207,10 @@ function transformation(r, d, t) {
 }
 
 function reset() {
-    direction = new THREE.Vector3($("#a").val(), $("#b").val(), $("#c").val()).normalize();
+    direction = new THREE.Vector3(math.eval($("#u").val()), math.eval($("#v").val()), math.eval($("#w").val())).normalize();
     vec = direction;
-    t = 0;
+    a = 0;
+    alimit = 0;
     for (var i = 0; i < points.length; ++i) {
         scene.remove(points[i]);
     }
@@ -209,18 +218,25 @@ function reset() {
     idx = 0;
 }
 
-function updateDetuning(value) {
-    direction = vec;
-    detuning = value;
-    t = 0;
-    render();
+function updatePosition() {
+    direction = new THREE.Vector3(math.eval($("#u").val()), math.eval($("#v").val()), math.eval($("#w").val())).normalize();
+    vec = direction;
 }
 
-function updateRabiFrequency(value) {
-    direction = vec;
-    rabiFrequency = value;
-    t = 0;
-    render();
+function togglePaused() {
+    paused = !paused;
+    if (paused) {
+        $('#pauseButton').text('Start');
+    } else {
+        $('#pauseButton').text('Pause');
+    }
+}
+
+function addNewPulse() {
+    pulse = math.eval($("#pulse").val());
+    freq = math.eval($("#freq").val());
+    detune = math.eval($("#detune").val());
+    commands.push([pulse, freq, detune]);
 }
 
 renderLoop();

@@ -9,36 +9,53 @@
 				margin: 0px;
 				overflow: hidden;
 			}
+			th, td {
+    			padding-left: 5px;
+				padding-right: 5px;
+				padding-bottom: 0px;
+				padding-top: 0px;
+				margin: 0px;
+    			text-align: left;
+			}
 		</style>
 	</head>
 	<body style="font-family: 'Helvetica', 'Arial', sans-serif;">
+		<div id="footer" style="position: absolute; left: 0px; bottom: 0px; background-color:white; width: 100%; font-size: 8px; padding: 1px 1px 1px 10px;">Created by Sam Marsh.</div>
         <div id="container" style="width: 100%; height:100%;"></div>
-		<div id="descpanel" style="position: absolute; left: 10px; top: 10px; background-color:white; padding: 10px;">
-			(u = 0.00, v = 0.00, w = -1.00)
-		</div>
-        <div id="sidepanel" style="position: absolute; right: 10px; top: 10px; background-color:white; padding: 10px;">
-            <h1 style="color: #333;">BlochSphere</h1>
-            <table style="width: 100%; color: #555;">
+        <div id="sidepanel" style="position: absolute; right: 0px; top: 0px; background-color:white; padding: 10px; height: 100%; width: 30%;">
+            <h1 style="color: #333; text-align: center;">BlochSphere</h1>
+			<div id="descpanel" style="text-align: center;">
+				(u = 0.00, v = 0.00, w = -1.00)
+			</div>
+            <table cellspacing="0" style="width: 100%; color: #555; border-collapse:separate; border-spacing:0px;">
                 <tr>
-                    <td>Rabi frequency</td>
-                    <td><input onchange="updateRabiFrequency(this.value)" type="number" name="quantity" min="0" max="100" value="0"></td>
-                </tr>
-                <tr>
-                    <td>Detuning</td>
-                    <td><input onchange="updateDetuning(this.value)" type="number" name="quantity" min="1" max="5" value="1"></td>
-                </tr>
-                <tr>
-                    <td>Position</td>
-                    <td><input id="a" type="number" name="quantity" min="-1" max="1" value="1"></td>
-                    <td><input id="b" type="number" name="quantity" min="-1" max="1" value="1"></td>
-                    <td><input id="c" type="number" name="quantity" min="-1" max="1" value="1"></td>
-                    <td><button onclick="reset()">Reset</button></td>
-                </tr>
+                    <td><p style="width:100%;">Position</p></td>
+                    <td><input id="u" type="number" style="width:100%;" placeholder="u"></input></td><td><input id="v" type="number" style="width:100%;" placeholder="v"></input></td><td><input id="w" type="number" style="width:100%;" placeholder="w"></input></td>
+					<td><button onclick="updatePosition();">Set</button></td>
+				</tr>
+				<tr>
+					<td><p style="width:100%;">Queue</p></td>
+					<td><input id="pulse" style="width:100%;" placeholder="Pulse"></td>
+					<td><input id="freq" style="width:100%;" placeholder="Rabi frequency"></td>
+					<td><input id="detune" style="width:100%;" placeholder="Detuning"></td>
+					<td><button style="width:100%;" onclick="addNewPulse(); updateQueue();">Add</button></td>
+				</tr>
             </table>
+			<div style="text-align: center;"><button id="pauseButton" onclick="togglePaused();">Start</button></div>
+			<h2 style="color: #333; text-align: center;">About</h2>
+			<p style="font-size: 12px;">This is a Bloch sphere visualiser. Set an initial position for the Bloch vector, queue up some pulses and press start. If you want free precession, set Rabi frequency to zero and make the detuning negative.</p>
+			<h2 style="color: #333; text-align: center;">Queue</h2>
+			<div style="border-style: solid; border-width: 1px; min-width:200px;">
+				<table id="queuetable" style="width: 100%; color: #555;">
+					<tbody>
+					</tbody>
+				</table>
+			</div>
         </div>
 		<script src="three.js"></script>
         <script src="OrbitControls.js"></script>
         <script src="jquery.js"></script>
+		<script src="math.js"></script>
 		<script src="sphere.js"></script>
 	</body>
 </html>
