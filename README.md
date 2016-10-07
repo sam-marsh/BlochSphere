@@ -6,4 +6,4 @@ This is a WebGL animation of the evolution of the Bloch vector of a two-level qu
 
 Currently half-done - will refactor this to support light-pulses of fixed duration (e.g. pi/2 pulse).
 
-![image](https://i.imgur.com/KH8r7HM.png)
+![image](https://i.imgur.com/zmpFUx6.png)
