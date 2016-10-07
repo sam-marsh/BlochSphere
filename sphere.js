@@ -120,7 +120,7 @@ var paused = true;
 
 function updateQueue() {
     $('#queuetable > tbody').html('');
-    $('#queuetable > tbody:last-child').append('<tr><th>Pulse</th><th>Rabi Frequency</th><th>Detuning</th></tr>');
+    $('#queuetable > tbody:last-child').append('<tr><th>Pulse</th><th>Rabi frequency</th><th>Detuning</th></tr>');
     if (alimit > 0) {
         var a = (Math.round(alimit * 100) / 100).toFixed(2);
         var b = (Math.round(rabiFrequency * 100) / 100).toFixed(2);
