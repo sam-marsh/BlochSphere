@@ -11,7 +11,9 @@ var VIEW_ANGLE = 45,
 
 // create a WebGL renderer, camera
 // and a scene
-var renderer = new THREE.WebGLRenderer();
+var renderer = new THREE.WebGLRenderer({
+    antialias: true
+});
 renderer.autoClear = false;
 var camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
 var scene = new THREE.Scene();
@@ -30,7 +32,7 @@ renderer.setSize(WIDTH, HEIGHT);
 // attach the render-supplied DOM element
 $container.append(renderer.domElement);
 
-var spheregeometry = new THREE.SphereGeometry(1, 30, 30);
+var spheregeometry = new THREE.SphereGeometry(1, 50, 50);
 var spherematerial = new THREE.MeshNormalMaterial({
     transparent: true,
     opacity: 0.5,
@@ -39,8 +41,9 @@ var sphere = new THREE.Mesh(spheregeometry, spherematerial);
 sphere.position.set(0, 0, 0);
 scene.add(sphere);
 
-var direction = new THREE.Vector3(0, 0, -1);
+var direction = new THREE.Vector3(-1, 2, 1);
 var r = new THREE.ArrowHelper(direction.normalize(), new THREE.Vector3(0, 0, 0), 1, 0xffffff);
+r.line.material.linewidth = 2;
 scene.add(r);
 
 var linematerial = new THREE.LineBasicMaterial({
@@ -63,6 +66,10 @@ line = new THREE.Line(geometry, linematerial);
 scene.add(line);
 
 controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enablePan = false;
+controls.zoomSpeed = 0.04;
+controls.minDistance = 3;
+controls.maxDistance = 5;
 //controls.addEventListener('change', render);
 
 var $x = $('<div style="position: absolute; top: 10px; left: 10px; color: white;"></div>');
@@ -106,17 +113,25 @@ var detuning = 1;
 var rabiFrequency = 0;
 var vec = direction;
 var commands = [];
-var a = 0;
+var a = -1;
 var alimit = -1;
 var completed = true;
 var paused = true;
 
 function updateQueue() {
     $('#queuetable > tbody').html('');
-    if (alimit > 0)
-        $('#queuetable > tbody:last-child').append('<tr><td>' + alimit + '</td><td>' + rabiFrequency + '</td><td>' + detuning + '</td></tr>');
+    $('#queuetable > tbody:last-child').append('<tr><th>Pulse</th><th>Rabi Frequency</th><th>Detuning</th></tr>');
+    if (alimit > 0) {
+        var a = (Math.round(alimit * 100) / 100).toFixed(2);
+        var b = (Math.round(rabiFrequency * 100) / 100).toFixed(2);
+        var c = (Math.round(detuning * 100) / 100).toFixed(2);
+        $('#queuetable > tbody:last-child').append('<tr><td>' + a + '</td><td>' + b + '</td><td>' + c + '</td></tr>');
+    }
     for (var i = 0; i < commands.length; ++i) {
-        $('#queuetable > tbody:last-child').append('<tr><td>' + commands[i][0] + '</td><td>' + commands[i][1] + '</td><td>' + commands[i][2] + '</td></tr>');
+        var a = (Math.round(commands[i][0] * 100) / 100).toFixed(2);
+        var b = (Math.round(commands[i][1] * 100) / 100).toFixed(2);
+        var c = (Math.round(commands[i][2] * 100) / 100).toFixed(2);
+        $('#queuetable > tbody:last-child').append('<tr><td>' + a + '</td><td>' + b + '</td><td>' + c + '</td></tr>');
     }
 }
 
@@ -126,21 +141,25 @@ function render() {
     positionText(new THREE.Vector3(0, 0, 1.1), $z);
     loop();
     r.setDirection(vec);
-    if (points.length < 500) {
-        for (var i = 0; i < idx; ++i) {
-            points[i].material.opacity *= 0.98;
+
+    if (!paused) {
+        if (points.length < 500) {
+            for (var i = 0; i < idx; ++i) {
+                points[i].material.opacity *= 0.98;
+            }
+            ++idx;
+            points.push(createPoint(vec));
+        } else {
+            for (var i = idx - 500; i < idx; i++) {
+                points[(i + points.length) % points.length].material.opacity *= 0.97;
+            }
+            var pt = points[idx++ % points.length];
+            pt.geometry.vertices[0] = vec;
+            pt.material.opacity = 1;
+            pt.geometry.verticesNeedUpdate = true;
         }
-        ++idx;
-        points.push(createPoint(vec));
-    } else {
-        for (var i = idx - 500; i < idx; i++) {
-            points[(i + points.length) % points.length].material.opacity *= 0.97;
-        }
-        var pt = points[idx++ % points.length];
-        pt.geometry.vertices[0] = vec;
-        pt.material.opacity = 1;
-        pt.geometry.verticesNeedUpdate = true;
     }
+
     renderer.render(scene, camera);
     renderer.clearDepth();
     renderer.render(scene2, camera);
@@ -152,16 +171,14 @@ function render() {
 }
 
 function loop() {
-    if (!paused) {
-        vec = direction.clone().applyMatrix3(transformation(rabiFrequency, detuning, a / gr(rabiFrequency, detuning))).normalize();
-    }
+    vec = direction.clone().applyMatrix3(transformation(rabiFrequency, detuning, a / gr(rabiFrequency, detuning))).normalize();
     if (a > alimit) {
+        vec = direction.clone().applyMatrix3(transformation(rabiFrequency, detuning, alimit / gr(rabiFrequency, detuning))).normalize();
         direction = vec;
         completed = true;
     }
     if (completed) {
         if (commands.length > 0) {
-            vec = direction.clone().applyMatrix3(transformation(rabiFrequency, detuning, alimit / gr(rabiFrequency, detuning))).normalize();
             var next = commands.shift();
             alimit = next[0];
             rabiFrequency = next[1];
@@ -175,9 +192,7 @@ function loop() {
         a = 0;
         updateQueue();
     }
-    if (paused) {
-        return;
-    }
+    if (paused) return;
     if (!completed) {
         a += 0.01;
     }
@@ -206,20 +221,11 @@ function transformation(r, d, t) {
     ]);
 }
 
-function reset() {
-    direction = new THREE.Vector3(math.eval($("#u").val()), math.eval($("#v").val()), math.eval($("#w").val())).normalize();
-    vec = direction;
-    a = 0;
-    alimit = 0;
-    for (var i = 0; i < points.length; ++i) {
-        scene.remove(points[i]);
-    }
-    points = [];
-    idx = 0;
-}
-
 function updatePosition() {
     direction = new THREE.Vector3(math.eval($("#u").val()), math.eval($("#v").val()), math.eval($("#w").val())).normalize();
+    if (direction.x == 0 && direction.y == 0 && direction.z == 0) {
+        direction = new THREE.Vector3(0, 0, -1);
+    }
     vec = direction;
 }
 
