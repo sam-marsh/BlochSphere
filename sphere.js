@@ -120,18 +120,43 @@ var paused = true;
 
 function updateQueue() {
     $('#queuetable > tbody').html('');
-    $('#queuetable > tbody:last-child').append('<tr><th>Pulse</th><th>Rabi Frequency</th><th>Detuning</th></tr>');
+    $('#queuetable > tbody:last-child').append('<tr><th width="40%;">Type</th><th width="30%;">For</th><th width="30%;">Detuning</th></tr>');
     if (alimit > 0) {
         var a = (Math.round(alimit * 100) / 100).toFixed(2);
         var b = (Math.round(rabiFrequency * 100) / 100).toFixed(2);
         var c = (Math.round(detuning * 100) / 100).toFixed(2);
-        $('#queuetable > tbody:last-child').append('<tr><td>' + a + '</td><td>' + b + '</td><td>' + c + '</td></tr>');
+
+        var type;
+        var time;
+        var other;
+        if (b == 0) {
+            type = "Free precession";
+            time = aStr;
+            other = "";
+        } else {
+            type = "Light applied";
+            time = aStr;
+            other = detuneStr;
+        }
+        $('#queuetable > tbody:last-child').append('<tr><td>' + type + '</td><td>' + time + '</td><td>' + other + '</td></tr>');
     }
     for (var i = 0; i < commands.length; ++i) {
         var a = (Math.round(commands[i][0] * 100) / 100).toFixed(2);
         var b = (Math.round(commands[i][1] * 100) / 100).toFixed(2);
         var c = (Math.round(commands[i][2] * 100) / 100).toFixed(2);
-        $('#queuetable > tbody:last-child').append('<tr><td>' + a + '</td><td>' + b + '</td><td>' + c + '</td></tr>');
+        var type;
+        var time;
+        var other;
+        if (b == 0) {
+            type = "Free precession";
+            time = commands[i][3];
+            other = "";
+        } else {
+            type = "Light applied";
+            time = commands[i][3];
+            other = commands[i][4];
+        }
+        $('#queuetable > tbody:last-child').append('<tr><td>' + type + '</td><td>' + time + '</td><td>' + other + '</td></tr>');
     }
 }
 
@@ -170,6 +195,9 @@ function render() {
     $("#descpanel").text("(u = " + rx + ", v = " + ry + ", w = " + rz + ")");
 }
 
+var aStr;
+var detuneStr;
+
 function loop() {
     vec = direction.clone().applyMatrix3(transformation(rabiFrequency, detuning, a / gr(rabiFrequency, detuning))).normalize();
     if (a > alimit) {
@@ -183,6 +211,8 @@ function loop() {
             alimit = next[0];
             rabiFrequency = next[1];
             detuning = next[2];
+            aStr = next[3];
+            detuneStr = next[4];
             completed = false;
         } else {
             alimit = 0;
@@ -239,10 +269,21 @@ function togglePaused() {
 }
 
 function addNewPulse() {
-    pulse = math.eval($("#pulse").val());
-    freq = math.eval($("#freq").val());
-    detune = math.eval($("#detune").val());
-    commands.push([pulse, freq, detune]);
+    if ($('#freq').is(':checked')) {
+        pulse = math.eval($("#pulse").val());
+        freq = 1;
+        detune = math.eval($("#detune").val());
+        commands.push([pulse, freq, detune, $("#pulse").val(), $("#detune").val()]);
+    } else {
+        pulse = math.eval($("#pulse").val());
+        freq = 0;
+        detune = -1;
+        commands.push([pulse, freq, detune, $("#pulse").val(), 0]);
+    }
 }
+
+$('#freq').click(function() {
+    $('#detune').attr('hidden', !this.checked)
+});
 
 renderLoop();

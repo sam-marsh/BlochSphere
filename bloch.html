@@ -20,6 +20,11 @@
 				margin: 0px;
     			text-align: left;
 			}
+			input[type=checkbox], input[type=radio] {
+			  vertical-align: middle;
+			  position: relative;
+			  bottom: 1px;
+			}
 		</style>
 	</head>
 	<body>
@@ -38,14 +43,21 @@
 				<tr>
 					<td><p style="width:100%;">Queue</p></td>
 					<td><input id="pulse" style="width:100%;" placeholder="Pulse"></td>
-					<td><input id="freq" style="width:100%;" placeholder="Rabi frequency"></td>
-					<td><input id="detune" style="width:100%;" placeholder="Detuning"></td>
+					<td><label style="font-size:12px;"><input type="checkbox" id="freq"> Light</label></td>
+					<td><input id="detune" style="width:100%;" placeholder="Detuning" hidden="true"></td>
 					<td><button style="width:100%;" onclick="addNewPulse(); updateQueue();">Add</button></td>
 				</tr>
             </table>
 			<div style="text-align: center;"><button id="pauseButton" onclick="togglePaused();">Start</button></div>
 			<h2 style="color: #69c; text-align: center; background-color: #E0E0E0;">About</h2>
-			<p style="font-size: 12px; text-align: justify;">This is a Bloch sphere visualiser - a quantum mechanical simulation of a two state particle under the influence of an external light field. Set an initial position for the Bloch vector, queue up some pulses and press start. If you want free precession, set the Rabi frequency to zero and make the detuning negative. The input boxes support simple math expressions (pi, cos, etc.). The time for a pulse isn't in units of time: rather, it is in angular units (e.g. a pi/2 pulse will rotate the vector by pi/2 around some axis dependent on the Rabi frequency and detuning).</p>
+			<p style="font-size: 12px; text-align: justify;">This is a Bloch sphere visualiser - a quantum mechanical simulation of a
+				two state particle under the influence of an external light field.
+				Set an initial position for the Bloch vector, queue up some pulses and press start.
+				The input boxes support simple math expressions (pi, cos, etc.).
+				The time for a light pulse isn't in units of time: rather,
+				it is in angular units (e.g. a pi/2 pulse will rotate the vector by pi/2 around some axis dependent on
+				the detuning). Likewise for free precession. Also, you can rotate the viewpoint by dragging the mouse. Note
+				this is not 'to scale' in terms of time/speed: it is more to show how the Bloch vector moves.</p>
 			<h2 style="color: #69c; text-align: center; background-color: #E0E0E0;">Queue</h2>
 			<div style="border-style: solid; border-width: 1px; min-width:200px;">
 				<table id="queuetable" style="width: 100%; color: #555;">
